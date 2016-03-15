@@ -46,9 +46,9 @@ def write_users(reader):
 
         email = d['Email'].strip() if d['Email'] else None
         name = d['UserName'].strip()
-        username = name.lower()
+        username = ''.join([name, '.', group.name]).lower()[:32]
         
-        models.User.objects(name=name).update(set__group=group, set__email=email, set__username=username, upsert=True)
+        models.User.objects(name=name, group=group).update(set__email=email, set__username=username, upsert=True)
 
 def write_currencies(reader):
     '''
