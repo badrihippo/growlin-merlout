@@ -23,7 +23,7 @@ def write_usergroups(reader):
         raise ValueError("CSV format must be ['GroupID', 'GroupName']")
 
     for d in reader:
-        models.UserGroup.objects.create(position=d[0], name=d[1])
+        models.UserGroup.objects(name=d[1]).update(set__position=d[0], upsert=True)
 
 def process_all():
     print 'Importing UserGroups...'
