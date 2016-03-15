@@ -11,7 +11,15 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),'../gro
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),'../growlin/flask-admin-material'))
 
 import csv
+from datetime import datetime
 from growlin import models
+
+def _get_or_create(model, *args, **kwargs):
+    try:
+        model = model.objects.get(*args, **kwargs)
+    except model.DoesNotExist:
+        model = model.objects.create(*args, **kwargs)
+    return model
 
 def write_usergroups(reader):
     '''
@@ -78,6 +86,46 @@ def write_locations(reader):
             prevent_borrowing = False
         models.CampusLocation.objects(name=name).update(set__prevent_borrowing=prevent_borrowing, upsert=True)
 
+def write_bookitems(reader):
+    '''
+    Import BookItems from a csv DictReader
+    '''
+    for d in reader:
+        accession = 'b:' + d['Accession'].strip()
+        try:
+            b = models.BookItem.objects.get(accession=accession)
+        except models.db.DoesNotExist:
+            b = models.BookItem()
+            b.accession = accession
+        b.call_nos = [d['Call number'].strip()[:8]]
+        b.title = d['Title'].strip()
+
+        b.authors.append(_get_or_create(models.Creator, name=d['Author'].strip()))
+
+        if b.publication is None: b.publication = models.BookPublicationDetails()
+        b.publication.publisher = _get_or_create(models.Publisher, name=d['Publisher'])
+        b.publication.place = _get_or_create(models.PublishPlace, name=d['Place of publication'])
+        try:
+            pub_year = int(d['Date of publication'].split(' ')[-1])
+            if pub_year == 0: pub_year = None
+        except:
+            pub_year = None
+        b.publication.pub_year = pub_year
+
+        try:
+            b.receipt_date = datetime.strptime(d['Date of receipt'], '%d %b %Y')
+        except ValueError:
+            b.receipt_date = None
+        b.currency = _get_or_create(models.Currency, name=d['Currency'].strip())
+        try:
+            b.price = float(d['Price'])
+        except ValueError:
+            b.price = None
+        b.source = d['Source'][:128]
+        b.campus_location = _get_or_create(models.CampusLocation, name=d['Location'])
+
+        b.save()
+
 def process_all():
     print 'Importing UserGroups...'
     with open('List_of_Groups.csv', 'rb') as f:
@@ -108,6 +156,11 @@ def process_all():
     with open('List_of_Locations.csv', 'rb') as f:
         r = csv.DictReader(f)
         write_locations(r)
+
+    print 'Importing BookItems...'
+    with open('Accession_Register.csv', 'rb') as f:
+        r = csv.DictReader(f)
+        write_bookitems(r)
 
 if __name__ == '__main__':
     process_all()
