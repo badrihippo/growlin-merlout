@@ -11,7 +11,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),'../gro
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),'../growlin/flask-admin-material'))
 
 import csv
-from datetime import datetime
+from datetime import datetime, timedelta
 from growlin import models
 
 def _get_or_create(model, *args, **kwargs):
@@ -126,6 +126,62 @@ def write_bookitems(reader):
 
         b.save()
 
+def write_borrowcurrent(reader):
+    two_weeks = timedelta(days=14)
+    for d in reader:
+        accession = 'b:' + d['Accession']
+        try:
+            b = models.BookItem.objects.get(accession=accession)
+        except models.BookItem.DoesNotExist:
+            print 'Warning: Skipping %(accession)s - "%(title)s", borrowed by %(user)s: Record does note exist' % {
+                'accession': accession,
+                'title': d['Title'],
+                'user': d['UserName']
+                }
+            continue
+
+        user, group = d['UserName'].strip().split(',')
+        try:
+            g = models.UserGroup.objects.get(name=group)
+            u = models.User.objects.get(name=user, group=g)
+        except models.db.DoesNotExist:
+            print 'Warning: Skipping %(accession)s - "%(title)s", borrowed by %(user)s: User does not exist!' % {
+                'accession': b.accession,
+                'title': b.title,
+                'user': d['UserName'],
+            }
+            continue
+
+        if b.borrow_current is not None:
+            if b.borrow_current.user != u: # Borrowed by someone else
+                print 'Warning: Skipping %(accession)s - "%(title)s", borrowed by %(user)s: Item already borrowed by %(borrower)s' % {
+                    'accession': b.accession,
+                    'title': b.title,
+                    'user': d['UserName'],
+                    'borrower': b.borrow_current.user.name
+                }
+                continue
+        else:
+            b.borrow_current = models.BorrowCurrent()
+
+        b.borrow_current.user = u
+        try:
+            date_string = d['Date Borrowed'].strip()
+            b.borrow_current.borrow_date = datetime.strptime(date_string, '%m/%d/%Y %H:%M:%S')
+        except ValueError:
+            try:
+                b.borrow_current.borrow_date = datetime.strptime(date_string, '%m/%d/%y %H:%M:%S')
+            except ValueError:
+                print 'Warning: Unset borrow date for %(accession)s - "%(title)s": "%(date)s" is not a valid date' % {
+                    'accession': b.accession,
+                    'title': b.title,
+                    'user': d['UserName'],
+                    'date': date_string
+                }
+            if b.borrow_current.borrow_date is not None:
+                b.borrow_current.due_date = b.borrow_current.borrow_date + two_weeks
+        b.save()
+
 def process_all():
     print 'Importing UserGroups...'
     with open('List_of_Groups.csv', 'rb') as f:
@@ -161,6 +217,11 @@ def process_all():
     with open('Accession_Register.csv', 'rb') as f:
         r = csv.DictReader(f)
         write_bookitems(r)
+
+    print 'Importing BorrowCurrent...'
+    with open('Current_Issues.csv', 'rb') as f:
+        r = csv.DictReader(f)
+        write_borrowcurrent(r)
 
 if __name__ == '__main__':
     process_all()
