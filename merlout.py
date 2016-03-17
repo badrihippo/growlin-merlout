@@ -102,15 +102,14 @@ def write_bookitems(reader):
 
         b.authors.append(_get_or_create(models.Creator, name=d['Author'].strip()))
 
-        if b.publication is None: b.publication = models.BookPublicationDetails()
-        b.publication.publisher = _get_or_create(models.Publisher, name=d['Publisher'])
-        b.publication.place = _get_or_create(models.PublishPlace, name=d['Place of publication'])
+        b.publication_publisher = _get_or_create(models.Publisher, name=d['Publisher'])
+        b.publication_place = _get_or_create(models.PublishPlace, name=d['Place of publication'])
         try:
             pub_year = int(d['Date of publication'].split(' ')[-1])
             if pub_year == 0: pub_year = None
         except:
             pub_year = None
-        b.publication.pub_year = pub_year
+        b.publication_year = pub_year
 
         try:
             b.receipt_date = datetime.strptime(d['Date of receipt'], '%d %b %Y')
