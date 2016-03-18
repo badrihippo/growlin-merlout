@@ -200,3 +200,20 @@ def write_borrowcurrent(reader):
             if bc.borrow_date is not None:
                 bc.due_date = bc.borrow_date + two_weeks
         bc.save()
+
+def set_admin():
+    try:
+        u = models.User.get(name='Amogh')
+        print 'Set Amogh as admin (y/N)?',
+        ans = raw_input()
+        if ans[0] in ('y', 'Y'):
+            r, created = models.UserRole.get_or_create(name='admin')
+            ur, created = models.UserRoles.get_or_create(user=u, role=r)
+            if not created:
+                print 'Amogh was already admin!'
+            else:
+                print 'Administrator added successfully'
+        else:
+            print 'Abort.'
+    except Exception, e:
+        pass

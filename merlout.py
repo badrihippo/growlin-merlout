@@ -50,6 +50,9 @@ def process_all():
     print 'Importing BorrowCurrent...'
     process_one(write_borrowcurrent, 'Current_Issues.csv')
 
+    set_admin()
+    print 'Finished!'
+
 if __name__ == '__main__':
     process_all()
 

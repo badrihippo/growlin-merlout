@@ -170,3 +170,17 @@ def write_borrowcurrent(reader):
             if b.borrow_current.borrow_date is not None:
                 b.borrow_current.due_date = b.borrow_current.borrow_date + two_weeks
         b.save()
+
+def set_admin():
+    try:
+        u = models.User.objects.get(name='Amogh')
+        print 'Set Amogh as admin (y/N)?',
+        ans = raw_input()
+        if ans[0] in ('y', 'Y'):
+            r = _get_or_create(models.UserRole, name='admin')
+            ur = _get_or_create(models.UserRoles, user=u, role=r)
+            print 'Administrator added'
+        else:
+            print 'Abort.'
+    except Exception, e:
+        pass
