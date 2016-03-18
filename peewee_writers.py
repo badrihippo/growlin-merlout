@@ -148,12 +148,11 @@ def write_bookitems(reader):
         b.save()
 
 def write_borrowcurrent(reader):
-    raise NotImplementedError('Please do not do this yet!')
     two_weeks = timedelta(days=14)
     for d in reader:
         accession = 'b:' + d['Accession']
         try:
-            b = models.BookItem.objects.get(accession=accession)
+            b = models.BookItem.get(accession=accession)
         except models.BookItem.DoesNotExist:
             print 'Warning: Skipping %(accession)s - "%(title)s", borrowed by %(user)s: Record does note exist' % {
                 'accession': accession,
@@ -173,8 +172,8 @@ def write_borrowcurrent(reader):
                 'user': d['UserName'],
             }
             continue
-
-        if b.borrow_current is not None:
+        bc, created = models.BorrowCurrent.get_or_create(user=u, item=b)
+        if not created:
             if b.borrow_current.user != u: # Borrowed by someone else
                 print 'Warning: Skipping %(accession)s - "%(title)s", borrowed by %(user)s: Item already borrowed by %(borrower)s' % {
                     'accession': b.accession,
@@ -183,16 +182,14 @@ def write_borrowcurrent(reader):
                     'borrower': b.borrow_current.user.name
                 }
                 continue
-        else:
-            b.borrow_current = models.BorrowCurrent()
 
-        b.borrow_current.user = u
+        bc.user = u
         try:
             date_string = d['Date Borrowed'].strip()
-            b.borrow_current.borrow_date = datetime.strptime(date_string, '%m/%d/%Y %H:%M:%S')
+            bc.borrow_date = datetime.strptime(date_string, '%m/%d/%Y %H:%M:%S')
         except ValueError:
             try:
-                b.borrow_current.borrow_date = datetime.strptime(date_string, '%m/%d/%y %H:%M:%S')
+                bc.borrow_date = datetime.strptime(date_string, '%m/%d/%y %H:%M:%S')
             except ValueError:
                 print 'Warning: Unset borrow date for %(accession)s - "%(title)s": "%(date)s" is not a valid date' % {
                     'accession': b.accession,
@@ -200,6 +197,6 @@ def write_borrowcurrent(reader):
                     'user': d['UserName'],
                     'date': date_string
                 }
-            if b.borrow_current.borrow_date is not None:
-                b.borrow_current.due_date = b.borrow_current.borrow_date + two_weeks
-        b.save()
+            if bc.borrow_date is not None:
+                bc.due_date = bc.borrow_date + two_weeks
+        bc.save()
