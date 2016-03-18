@@ -19,46 +19,35 @@ if app.app.config['GROWLIN_USE_PEEWEE']:
 else:
     from mongo_writers import *
 
+def process_one(function, filename):
+    with open(filename, 'rb') as f:
+        r = csv.DictReader(f)
+        function(r)
+
 def process_all():
     print 'Importing UserGroups...'
-    with open('List_of_Groups.csv', 'rb') as f:
-        r = csv.reader(f)
-        write_usergroups(r)
+    process_one(write_usergroups, 'List_of_Groups.csv')
 
     print 'Importing Users...'
-    with open('List_of_Users.csv', 'rb') as f:
-        r = csv.DictReader(f)
-        write_users(r)
+    process_one(write_users, 'List_of_Users.csv')
 
     print 'Importing Currencies...'
-    with open('List_of_Currencies.csv', 'rb') as f:
-        r = csv.DictReader(f)
-        write_currencies(r)
+    process_one(write_currencies, 'List_of_Currencies.csv')
 
     print 'Importing Publishers...'
-    with open('List_of_Publishers.csv', 'rb') as f:
-        r = csv.DictReader(f)
-        write_publishers(r)
+    process_one(write_publishers, 'List_of_Publishers.csv')
 
     print 'Importing PublishPlaces...'
-    with open('List_of_Places_of_Publication.csv', 'rb') as f:
-        r = csv.DictReader(f)
-        write_publishplaces(r)
+    process_one(write_publishplaces, 'List_of_Places_of_Publication.csv')
 
     print 'Importing CampusLocations...'
-    with open('List_of_Locations.csv', 'rb') as f:
-        r = csv.DictReader(f)
-        write_locations(r)
+    process_one(write_locations, 'List_of_Locations.csv')
 
     print 'Importing BookItems...'
-    with open('Accession_Register.csv', 'rb') as f:
-        r = csv.DictReader(f)
-        write_bookitems(r)
+    process_one(write_bookitems, 'Accession_Register.csv')
 
     print 'Importing BorrowCurrent...'
-    with open('Current_Issues.csv', 'rb') as f:
-        r = csv.DictReader(f)
-        write_borrowcurrent(r)
+    process_one(write_borrowcurrent, 'Current_Issues.csv')
 
 if __name__ == '__main__':
     process_all()
