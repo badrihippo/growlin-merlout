@@ -114,7 +114,7 @@ def write_bookitems(reader):
     '''
     Import BookItems from a csv DictReader
     '''
-    it, created = models.ItemType.get_or_create(name='book')
+    it, created = models.ItemType.get_or_create(name='book', defaults={'prefix':'b'})
     for d in reader:
         accession = 'b:' + d['Accession'].strip()
         b = models.BookItem()
