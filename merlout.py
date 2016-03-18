@@ -25,6 +25,7 @@ def process_one(function, filename):
         function(r)
 
 def process_all():
+    create_tables()
     print 'Importing UserGroups...'
     process_one(write_usergroups, 'List_of_Groups.csv')
 

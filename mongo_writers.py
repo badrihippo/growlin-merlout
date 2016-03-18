@@ -9,6 +9,8 @@ def _get_or_create(model, *args, **kwargs):
         model = model.objects.create(*args, **kwargs)
     return model
 
+def create_tables(): pass # For peewee compat
+
 def write_usergroups(reader):
     '''
     Import User Groups from a csv reader serving a file of format:
