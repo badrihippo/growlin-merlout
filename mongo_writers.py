@@ -13,15 +13,12 @@ def create_tables(): pass # For peewee compat
 
 def write_usergroups(reader):
     '''
-    Import User Groups from a csv reader serving a file of format:
+    Import User Groups from a csv DictReader serving a file of format:
     ['GroupID', 'GroupName']
     '''
 
-    if reader.next() != ['GroupID', 'GroupName']:
-        raise ValueError("CSV format must be ['GroupID', 'GroupName']")
-
     for d in reader:
-        models.UserGroup.objects(name=d[1]).update(set__position=d[0], upsert=True)
+        models.UserGroup.objects(name=d['GroupName']).update(set__position=d['GroupID'], upsert=True)
 
 def write_users(reader):
     '''
