@@ -196,9 +196,10 @@ def set_admin():
         ans = raw_input()
         if ans[0] in ('y', 'Y'):
             r = _get_or_create(models.UserRole, name='admin')
-            ur = _get_or_create(models.UserRoles, user=u, role=r)
+            u.roles.append(r)
+            u.save()
             print 'Administrator added'
         else:
             print 'Abort.'
     except Exception, e:
-        pass
+        print e
