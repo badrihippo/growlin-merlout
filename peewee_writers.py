@@ -163,7 +163,14 @@ def write_bookitems(reader):
 def write_borrowcurrent(reader):
     two_weeks = timedelta(days=14)
     for d in reader:
-        accession = 'b:' + d['Accession']
+        if d['Category'] == '1':
+            # It's a Book.
+            accession = 'b:' + d['Accession']
+        elif d['Category'] == '2':
+            # It's a Periodical
+            accession = 'p:' + d['Accession']
+        else:
+            accession = d['Accession']
         try:
             b = models.BookItem.get(accession=accession)
         except models.BookItem.DoesNotExist:
