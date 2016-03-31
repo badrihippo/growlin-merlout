@@ -8,6 +8,18 @@ def _get_or_create(model, *args, **kwargs):
     except model.DoesNotExist:
         model = model.objects.create(*args, **kwargs)
     return model
+def _user_from_userid(userid):
+    '''
+    This functions takes in a string of the form
+    'User, Group' and returns the user and group.
+    Some users have commas in their names.
+    '''
+
+    usergroup = userid.strip().split(',')
+    group = usergroup[-1].strip()
+    user = ''.join(usergroup[:-1]).strip()
+
+    return user, group
 
 def create_tables(): pass # For peewee compat
 
@@ -126,7 +138,8 @@ def write_borrowcurrent(reader):
                 }
             continue
 
-        user, group = d['UserName'].strip().split(',')
+        user, group = _user_from_userid(d['UserName'])
+
         try:
             g = models.UserGroup.objects.get(name=group)
             u = models.User.objects.get(name=user, group=g)
