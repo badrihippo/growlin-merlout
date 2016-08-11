@@ -14,7 +14,7 @@ import csv
 from datetime import datetime, timedelta
 from growlin import app, models
 
-if app.app.config['GROWLIN_USE_PEEWEE']:
+if app.config.get('GROWLIN_USE_PEEWEE', None):
     from peewee_writers import *
 else:
     from mongo_writers import *
