@@ -89,8 +89,20 @@ def write_bookitems(reader):
     '''
     Import BookItems from a csv DictReader
     '''
+    try:
+        it = models.ItemType.objects.get(name='book')
+    except models.ItemType.DoesNotExist:
+        print 'Creating ItemType: book'
+        it = models.ItemType()
+        it.name='book'
+        it.prefix=''
+        it.save()
+    if it.prefix == '':
+        prefix = ''
+    else:
+        prefix = '%s:' % it.prefix
     for d in reader:
-        accession = 'b:' + d['Accession'].strip()
+        accession = prefix + d['Accession'].strip()
         try:
             b = models.BookItem.objects.get(accession=accession)
         except models.db.DoesNotExist:
@@ -126,13 +138,27 @@ def write_bookitems(reader):
 
 def write_borrowcurrent(reader):
     two_weeks = timedelta(days=14)
+
+    # Generate dictionary of prefixes
+    prefixes = {}
+    for c in ('book', 'periodical'):
+        try:
+            it = models.ItemType.objects.get(name=c)
+            if it.prefix:
+                prefix = '%s:' % it.prefix
+            else:
+                prefix = ''
+        except models.ItemType.DoesNotExist:
+            prefix = ''
+        prefixes[c] = prefix
+
     for d in reader:
         if d['Category'] == '1':
             # It's a Book.
-            accession = 'b:' + d['Accession']
+            accession = prefixes['book'] + d['Accession']
         elif d['Category'] == '2':
             # It's a Periodical.
-            accession = 'p:' + d['Accession']
+            accession = prefixes['periodical'] + d['Accession']
         else:
             accession = d['Accession']
 
